@@ -188,21 +188,36 @@ if soi_file is not None and payroll_file is not None:
                 ]
             ]
         )
+        # =========================================
+        # Downloadable Audit Report
+        # =========================================
 
-        total_liability = (
-            merged_df["Correct_Long_Pay"] - merged_df["Longevity Pay"]
-        ).sum()
+        st.markdown("### Export Audit Report")
 
-        if abs(total_liability) > 1:
-            st.error(f"Total Organizational Longevity Variance: ₱{total_liability:,.2f}")
+        # Convert dataframe to CSV
+        csv_report = merged_df.to_csv(index=False).encode("utf-8")
+
+        st.download_button(
+            label="Download Full Longevity Audit Report (CSV)",
+            data=csv_report,
+            file_name="longevity_audit_report.csv",
+            mime="text/csv",
+        )
+
+                total_liability = (
+                    merged_df["Correct_Long_Pay"] - merged_df["Longevity Pay"]
+                ).sum()
+
+                if abs(total_liability) > 1:
+                    st.error(f"Total Organizational Longevity Variance: ₱{total_liability:,.2f}")
+                else:
+                    st.success("No longevity discrepancies detected.")
+
+            except Exception as e:
+                st.error(f"Processing Error: {e}")
+
         else:
-            st.success("No longevity discrepancies detected.")
-
-    except Exception as e:
-        st.error(f"Processing Error: {e}")
-
-else:
-    st.info("Upload both SOI and Payroll files to begin validation.")
+            st.info("Upload both SOI and Payroll files to begin validation.")
 
 st.markdown("---")
 
@@ -212,6 +227,7 @@ This system cross-validates official personnel service records against payroll l
 It computes authorized longevity pay using statutory 10% increments per 5-year service block,
 with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
+
 
 
 
