@@ -89,17 +89,24 @@ if soi_file is not None and payroll_file is not None:
             ),
             axis=1
         )
+        # Compute Difference (Over/Under Payment)
+merged_df["LP_Difference"] = (
+    merged_df["Longevity Pay"] - merged_df["Correct_Long_Pay"]
+)
 
         # =============================
         # VALIDATION CHECK
         # =============================
 
-        merged_df["LP_Status"] = merged_df.apply(
-            lambda row: "🔴 ERROR"
-            if abs(row["Longevity Pay"] - row["Correct_Long_Pay"]) > 1
-            else "🟢 OK",
-            axis=1
-        )
+        def lp_status_message(diff):
+    if abs(diff) <= 1:
+        return "🟢 OK"
+    elif diff > 0:
+        return f"🔴 OVERPAID ₱{diff:,.2f}"
+    else:
+        return f"🔴 UNDERPAID ₱{abs(diff):,.2f}"
+
+merged_df["LP_Status"] = merged_df["LP_Difference"].apply(lp_status_message)
 
         st.header("2. Validation Results")
 
@@ -140,3 +147,4 @@ This system cross-validates official personnel service records against payroll l
 It computes authorized longevity pay using statutory 10% increments per 5-year service block,
 with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
+
