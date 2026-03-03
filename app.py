@@ -131,6 +131,26 @@ if soi_file is not None and payroll_file is not None:
 
         with colC:
             st.metric("Net Organizational Liability", f"₱{net_liability:,.2f}")
+            # ===============================
+            # Personnel Impact Metrics
+            # ===============================
+
+            total_records = len(merged_df)
+            error_records = len(merged_df[abs(merged_df["LP_Difference"]) > 1])
+            ok_records = total_records - error_records
+
+            st.markdown("### Personnel Impact Overview")
+
+            colD, colE, colF = st.columns(3)
+
+            with colD:
+                st.metric("Total Personnel Evaluated", total_records)
+
+            with colE:
+                st.metric("Personnel With Discrepancies", error_records)
+
+            with colF:
+                st.metric("Personnel Fully Compliant", ok_records)
         st.header("2. Validation Results")
 
         st.dataframe(
@@ -170,6 +190,7 @@ This system cross-validates official personnel service records against payroll l
 It computes authorized longevity pay using statutory 10% increments per 5-year service block,
 with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
+
 
 
 
