@@ -151,6 +151,28 @@ if soi_file is not None and payroll_file is not None:
 
         with colF:
             st.metric("Personnel Fully Compliant", ok_records)
+        # ===============================
+        # Compliance Distribution Chart
+        # ===============================
+
+        st.markdown("### Compliance Distribution")
+
+        import matplotlib.pyplot as plt
+
+        labels = ["Compliant", "With Discrepancy"]
+        sizes = [ok_records, error_records]
+
+        fig, ax = plt.subplots()
+
+        ax.pie(
+            sizes,
+            labels=labels,
+            autopct="%1.1f%%",
+        )
+
+        ax.set_title("Personnel Compliance Overview")
+
+        st.pyplot(fig)
         st.header("2. Validation Results")
 
         st.dataframe(
@@ -190,6 +212,7 @@ This system cross-validates official personnel service records against payroll l
 It computes authorized longevity pay using statutory 10% increments per 5-year service block,
 with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
+
 
 
 
