@@ -107,30 +107,30 @@ if soi_file is not None and payroll_file is not None:
                 return f"🔴 UNDERPAID ₱{abs(diff):,.2f}"
 
         merged_df["LP_Status"] = merged_df["LP_Difference"].apply(lp_status_message)
-# ===============================
-# Financial Exposure Dashboard
-# ===============================
+        # ===============================
+        # Financial Exposure Dashboard
+        # ===============================
 
-total_overpayment = merged_df[merged_df["LP_Difference"] > 1]["LP_Difference"].sum()
+        total_overpayment = merged_df[merged_df["LP_Difference"] > 1]["LP_Difference"].sum()
 
-total_underpayment = abs(
-    merged_df[merged_df["LP_Difference"] < -1]["LP_Difference"].sum()
-)
+        total_underpayment = abs(
+            merged_df[merged_df["LP_Difference"] < -1]["LP_Difference"].sum()
+        )
 
-net_liability = total_underpayment - total_overpayment
+        net_liability = total_underpayment - total_overpayment
 
-st.header("📊 Organizational Financial Summary")
+        st.header("📊 Organizational Financial Summary")
 
-colA, colB, colC = st.columns(3)
+        colA, colB, colC = st.columns(3)
 
-with colA:
-    st.metric("Total Overpayment", f"₱{total_overpayment:,.2f}")
+        with colA:
+            st.metric("Total Overpayment", f"₱{total_overpayment:,.2f}")
 
-with colB:
-    st.metric("Total Underpayment", f"₱{total_underpayment:,.2f}")
+        with colB:
+            st.metric("Total Underpayment", f"₱{total_underpayment:,.2f}")
 
-with colC:
-    st.metric("Net Organizational Liability", f"₱{net_liability:,.2f}")
+        with colC:
+            st.metric("Net Organizational Liability", f"₱{net_liability:,.2f}")
         st.header("2. Validation Results")
 
         st.dataframe(
@@ -170,6 +170,7 @@ This system cross-validates official personnel service records against payroll l
 It computes authorized longevity pay using statutory 10% increments per 5-year service block,
 with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
+
 
 
 
