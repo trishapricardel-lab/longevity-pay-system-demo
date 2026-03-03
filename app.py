@@ -167,7 +167,7 @@ if soi_file is not None and payroll_file is not None:
             sizes,
             labels=labels,
             autopct="%1.1f%%",
-            textprops={"fontsize":8}
+            textprops={"fontsize":5}
         )
 
         ax.set_title("Personnel Compliance Overview")
@@ -212,6 +212,7 @@ This system cross-validates official personnel service records against payroll l
 It computes authorized longevity pay using statutory 10% increments per 5-year service block,
 with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
+
 
 
 
