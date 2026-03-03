@@ -99,12 +99,12 @@ if soi_file is not None and payroll_file is not None:
         # =============================
 
         def lp_status_message(diff):
-    if abs(diff) <= 1:
-        return "🟢 OK"
-    elif diff > 0:
-        return f"🔴 OVERPAID ₱{diff:,.2f}"
-    else:
-        return f"🔴 UNDERPAID ₱{abs(diff):,.2f}"
+            if abs(diff) <= 1:
+                return "🟢 OK"
+            elif diff > 0:
+                return f"🔴 OVERPAID ₱{diff:,.2f}"
+            else:
+                return f"🔴 UNDERPAID ₱{abs(diff):,.2f}"
 
 merged_df["LP_Status"] = merged_df["LP_Difference"].apply(lp_status_message)
 
@@ -147,5 +147,6 @@ This system cross-validates official personnel service records against payroll l
 It computes authorized longevity pay using statutory 10% increments per 5-year service block,
 with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
+
 
 
