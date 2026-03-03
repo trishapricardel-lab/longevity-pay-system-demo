@@ -1,3 +1,6 @@
+import pandas as pd
+from datetime import datetime
+import math
 import streamlit as st
 from datetime import date
 
@@ -7,6 +10,63 @@ st.title("Integrated Personnel–Finance Longevity Pay Management System")
 st.markdown("### Automated Tenure-Based Compensation & Reconciliation Engine")
 
 st.markdown("---")
+# ===== File Upload Section =====
+st.header("2. Data Upload Module")
+
+soi_file = st.file_uploader("Upload SOI File (S1) - CSV", type=["csv"])
+payroll_file = st.file_uploader("Upload Payroll File (Finance) - CSV", type=["csv"])
+
+st.markdown("---")
+# ===== Validation Engine =====
+if soi_file is not None and payroll_file is not None:
+
+    soi_df = pd.read_csv(soi_file)
+    payroll_df = pd.read_csv(payroll_file)
+
+    # Convert Entry Date (MM/DD/YYYY)
+    soi_df["Entry_Date"] = pd.to_datetime(soi_df["Entry_Date"], format="%m/%d/%Y")
+
+    today = datetime.today()
+
+    # Compute Years of Service
+    soi_df["Years_of_Service"] = (today - soi_df["Entry_Date"]).dt.days / 365.25
+
+    # Compute LP Count (max 5)
+    soi_df["LP_Count"] = soi_df["Years_of_Service"].apply(lambda x: min(math.floor(x / 5), 5))
+
+    # Merge SOI and Payroll
+    merged_df = pd.merge(soi_df, payroll_df, on="Name", how="inner")
+
+    # Compute Correct Long Pay
+   def compute_correct_lp(base_pay, lp_count):
+    if lp_count == 0:
+        return 0
+    elif lp_count == 5:
+        return base_pay * 0.50
+    else:
+        return base_pay * (1.1 ** lp_count - 1)
+
+merged_df["Correct_Long_Pay"] = merged_df.apply(
+    lambda row: compute_correct_lp(row["Base_Pay"], row["LP_Count"]),
+    axis=1
+)
+
+    # Expected Total Salary
+    merged_df["Expected_Total_Salary"] = merged_df["Base_Pay"] + merged_df["Correct_Long_Pay"]
+
+    # Variance Checks
+    merged_df["LP_Status"] = merged_df.apply(
+        lambda row: "🔴 ERROR" if abs(row["Long_Pay_Given"] - row["Correct_Long_Pay"]) > 1 else "🟢 OK",
+        axis=1
+    )
+
+    merged_df["Salary_Status"] = merged_df.apply(
+        lambda row: "🔴 ERROR" if abs(row["Total_Salary"] - row["Expected_Total_Salary"]) > 1 else "🟢 OK",
+        axis=1
+    )
+
+    st.header("3. Validation Results")
+    st.dataframe(merged_df)
 
 # ===== Personnel Module =====
 st.header("1. Personnel Record Module")
@@ -152,3 +212,4 @@ if uploaded_file is not None:
 
     else:
         st.warning("CSV must contain columns: Soldier_Name, Service_Start_Date, Base_Pay, Recorded_Longevity_%")
+
