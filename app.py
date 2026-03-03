@@ -28,107 +28,115 @@ st.markdown("---")
 if soi_file is not None and payroll_file is not None:
 
     try:
-        # Read files
         soi_df = pd.read_csv(soi_file)
         payroll_df = pd.read_csv(payroll_file)
 
         # Required Columns
-        required_soi_cols = ["Name", "Entry_Date"]
-        required_payroll_cols = ["Name", "Base_Pay", "Long_Pay_Given", "Total_Salary"]
+        required_soi_cols = ["Serial Number", "Date of Entry"]
+        required_payroll_cols = ["Serial Number", "Basic Salary", "Longevity Pay"]
 
         if not all(col in soi_df.columns for col in required_soi_cols):
-            st.error("SOI file must contain columns: Name, Entry_Date")
+            st.error("SOI file must contain: Serial Number, Date of Entry")
             st.stop()
 
         if not all(col in payroll_df.columns for col in required_payroll_cols):
-            st.error("Payroll file must contain columns: Name, Base_Pay, Long_Pay_Given, Total_Salary")
+            st.error("Payroll file must contain: Serial Number, Basic Salary, Longevity Pay")
             st.stop()
 
-        # Convert Entry Date (MM/DD/YYYY)
-        soi_df["Entry_Date"] = pd.to_datetime(soi_df["Entry_Date"], format="%m/%d/%Y")
+        # Convert Date of Entry (MM/DD/YYYY)
+        soi_df["Date of Entry"] = pd.to_datetime(
+            soi_df["Date of Entry"], format="%m/%d/%Y"
+        )
 
         # Convert numeric columns
-        payroll_df["Base_Pay"] = pd.to_numeric(payroll_df["Base_Pay"])
-        payroll_df["Long_Pay_Given"] = pd.to_numeric(payroll_df["Long_Pay_Given"])
-        payroll_df["Total_Salary"] = pd.to_numeric(payroll_df["Total_Salary"])
+        payroll_df["Basic Salary"] = pd.to_numeric(payroll_df["Basic Salary"])
+        payroll_df["Longevity Pay"] = pd.to_numeric(payroll_df["Longevity Pay"])
 
         # Compute Years of Service
         today = datetime.today()
-        soi_df["Years_of_Service"] = (today - soi_df["Entry_Date"]).dt.days / 365.25
+        soi_df["Years_of_Service"] = (
+            (today - soi_df["Date of Entry"]).dt.days / 365.25
+        )
 
         # Compute LP Count (max 5)
-        soi_df["LP_Count"] = soi_df["Years_of_Service"].apply(lambda x: min(math.floor(x / 5), 5))
+        soi_df["LP_Count"] = soi_df["Years_of_Service"].apply(
+            lambda x: min(math.floor(x / 5), 5)
+        )
 
-        # Merge SOI and Payroll
-        merged_df = pd.merge(soi_df, payroll_df, on="Name", how="inner")
+        # Merge by Serial Number
+        merged_df = pd.merge(
+            soi_df,
+            payroll_df,
+            on="Serial Number",
+            how="inner"
+        )
 
         # =============================
-        # LONG PAY COMPUTATION (Policy Based)
+        # LONG PAY COMPUTATION (Policy Cap at 50%)
         # =============================
 
-        def compute_correct_lp(base_pay, lp_count):
+        def compute_correct_lp(base_salary, lp_count):
             if lp_count == 0:
                 return 0
             elif lp_count == 5:
-                return base_pay * 0.50  # Policy cap
+                return base_salary * 0.50  # Policy cap
             else:
-                return base_pay * (1.1 ** lp_count - 1)
+                return base_salary * (1.1 ** lp_count - 1)
 
         merged_df["Correct_Long_Pay"] = merged_df.apply(
-            lambda row: compute_correct_lp(row["Base_Pay"], row["LP_Count"]),
+            lambda row: compute_correct_lp(
+                row["Basic Salary"], row["LP_Count"]
+            ),
             axis=1
         )
 
-        merged_df["Expected_Total_Salary"] = (
-            merged_df["Base_Pay"] + merged_df["Correct_Long_Pay"]
-        )
-
         # =============================
-        # VALIDATION CHECKS
+        # VALIDATION CHECK
         # =============================
 
         merged_df["LP_Status"] = merged_df.apply(
             lambda row: "🔴 ERROR"
-            if abs(row["Long_Pay_Given"] - row["Correct_Long_Pay"]) > 1
+            if abs(row["Longevity Pay"] - row["Correct_Long_Pay"]) > 1
             else "🟢 OK",
             axis=1
         )
-
-        merged_df["Salary_Status"] = merged_df.apply(
-            lambda row: "🔴 ERROR"
-            if abs(row["Total_Salary"] - row["Expected_Total_Salary"]) > 1
-            else "🟢 OK",
-            axis=1
-        )
-
-        # =============================
-        # DISPLAY RESULTS
-        # =============================
 
         st.header("2. Validation Results")
 
-        st.dataframe(merged_df)
+        st.dataframe(
+            merged_df[
+                [
+                    "Serial Number",
+                    "Years_of_Service",
+                    "LP_Count",
+                    "Basic Salary",
+                    "Longevity Pay",
+                    "Correct_Long_Pay",
+                    "LP_Status",
+                ]
+            ]
+        )
 
         total_liability = (
-            merged_df["Correct_Long_Pay"] - merged_df["Long_Pay_Given"]
+            merged_df["Correct_Long_Pay"] - merged_df["Longevity Pay"]
         ).sum()
 
         if abs(total_liability) > 1:
-            st.error(f"Total Organizational Liability: ₱{total_liability:,.2f}")
+            st.error(f"Total Organizational Longevity Variance: ₱{total_liability:,.2f}")
         else:
-            st.success("No discrepancies detected across uploaded records.")
+            st.success("No longevity discrepancies detected.")
 
     except Exception as e:
         st.error(f"Processing Error: {e}")
 
 else:
-    st.info("Please upload both SOI and Payroll files to begin validation.")
+    st.info("Upload both SOI and Payroll files to begin validation.")
 
 st.markdown("---")
 
-st.markdown("### System Objective")
+st.markdown("### Governance Objective")
 st.markdown("""
-This system cross-validates Personnel (S1) service entry data against Finance payroll records.
-It computes statutory longevity pay using a compound method with a policy cap at 50% (5th Long Pay),
-and automatically flags discrepancies in both long pay and total salary.
+This system cross-validates official personnel service records against payroll longevity disbursement.
+It computes authorized longevity pay using statutory 10% increments per 5-year service block,
+with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
