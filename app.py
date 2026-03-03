@@ -102,3 +102,53 @@ st.markdown("""
 This prototype embeds regulatory longevity computation, eliminates manual recalculation,
 and introduces automated reconciliation controls to prevent tenure-based compensation errors.
 """)
+# ===== CSV Upload & Batch Processing =====
+st.markdown("---")
+st.header("7. Batch Processing via CSV Upload")
+
+uploaded_file = st.file_uploader("Upload Personnel CSV File", type=["csv"])
+
+if uploaded_file is not None:
+    import pandas as pd
+
+    df = pd.read_csv(uploaded_file)
+
+    st.subheader("Uploaded Data")
+    st.dataframe(df)
+
+    # Ensure required columns exist
+    required_columns = ["Soldier_Name", "Service_Start_Date", "Base_Pay", "Recorded_Longevity_%"]
+
+    if all(col in df.columns for col in required_columns):
+
+        # Convert date column
+        df["Service_Start_Date"] = pd.to_datetime(df["Service_Start_Date"])
+
+        today = pd.to_datetime(date.today())
+
+        # Compute Years of Service
+        df["Years_of_Service"] = (
+            today.year - df["Service_Start_Date"].dt.year -
+            ((today.month, today.day) < (df["Service_Start_Date"].dt.month, df["Service_Start_Date"].dt.day))
+        )
+
+        # Authorized Longevity Rate
+        df["Authorized_Longevity_%"] = (df["Years_of_Service"] // 5) * 10
+
+        # Monthly Variance
+        df["Variance"] = (
+            (df["Authorized_Longevity_%"] - df["Recorded_Longevity_%"]) / 100
+        ) * df["Base_Pay"]
+
+        st.subheader("Processed Results")
+        st.dataframe(df)
+
+        total_liability = df["Variance"].sum()
+
+        if total_liability != 0:
+            st.error(f"Total Organizational Liability: ₱{total_liability:,.2f}")
+        else:
+            st.success("No discrepancies detected across uploaded records.")
+
+    else:
+        st.warning("CSV must contain columns: Soldier_Name, Service_Start_Date, Base_Pay, Recorded_Longevity_%")
