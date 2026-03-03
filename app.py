@@ -90,8 +90,8 @@ if soi_file is not None and payroll_file is not None:
             axis=1
         )
         # Compute Difference (Over/Under Payment)
-merged_df["LP_Difference"] = (
-    merged_df["Longevity Pay"] - merged_df["Correct_Long_Pay"]
+        merged_df["LP_Difference"] = (
+            merged_df["Longevity Pay"] - merged_df["Correct_Long_Pay"]
 )
 
         # =============================
@@ -147,4 +147,5 @@ This system cross-validates official personnel service records against payroll l
 It computes authorized longevity pay using statutory 10% increments per 5-year service block,
 with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
+
 
