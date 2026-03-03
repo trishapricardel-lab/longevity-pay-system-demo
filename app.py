@@ -163,6 +163,11 @@ if soi_file is not None and payroll_file is not None:
         sizes = [ok_records, error_records]
 
         fig, ax = plt.subplots(figsize=(1,1))
+        wedges, texts, autotexts = ax.pie(
+            sizes,
+            labels=labels,
+            autopct="%1.1f%%",
+            textprops={"fontsize":8}
 
         ax.pie(
             sizes,
@@ -212,6 +217,7 @@ This system cross-validates official personnel service records against payroll l
 It computes authorized longevity pay using statutory 10% increments per 5-year service block,
 with a policy cap at 50%, and automatically flags discrepancies for control review.
 """)
+
 
 
 
